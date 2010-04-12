@@ -1,3 +1,3 @@
 2010 April 9. RadLibs.
 Works with WebKit, Gecko, Presto, and Trident (or at least, IE6+)
-Known bugs: Faux placeholder behavior not working in Camino 2.0.2, IE 6 and 7 numbered list item numbers do not appear.
+Known bugs: Faux placeholder behavior not working in Camino 2.0.2; IE 6 and 7 numbered list item numbers do not appear.
