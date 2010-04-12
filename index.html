@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale:0.25, maximum-scale:1.6, user-scalable=yes;" />
+	<meta name="author" content="Gordon Mei" />
+	<title>RadLibs - Studio Gordon Mei - Lab</title>
+	<style type="text/css">
+		* {margin:0; padding:0; font:normal 14pt "HelveticaNeue-Light","Helvetica Neue Light","Helvetica Neue","Helvetica","Arial",sans-serif; font-weight:300;}
+		body {margin:2em 5em;}
+		a:link, a:visited, a:focus, a:active {color:#009aff;}
+		a:hover {color:#ff5c80; text-decoration:line-through;}
+
+		label {display:none;}
+
+		input[type="text"] {border-width:0 0 1px 0; border-color:#ccc;}
+
+		input[type="text"]:focus {outline:0;}
+
+		input[type="submit"], #revealing {cursor:pointer; margin:0.5em 0; padding:0.3em 0.7em; border:1px solid #cfd6d9; border-radius:20px; -moz-border-radius:20px; -webkit-border-radius:20px; background-color:#eef6ff; background:-webkit-gradient(linear, left top, left bottom, from(#fff), to(#e3e7ef)) !important; background:-moz-linear-gradient(top, #fff, #fff, #e3e7ef) !important; text-shadow: #fff 0 1px 0;}
+		
+		input[type="submit"]:hover, #revealing:hover {cursor:pointer; background-color:#d3f7ff; background:-webkit-gradient(linear, left top, left bottom, from(#fff), to(#fff), color-stop(0.5, #e3e7ef)) !important; background:-moz-linear-gradient(top, #fff, #e3e7ef, #fff) !important;}
+		
+		/* start IE 6 and 7 specific */
+		#revealing {_margin:0.5em 0; *padding:0.1em; *border:1px solid #cfd6d9; _background-color:#eef6ff; *cursor:pointer;}
+		#thelist input, #contentwithlife input {_border-width:0 0 1px 0; _border-style:solid; _border-color:#ccc;}
+		/* end IE 6 and 7 specific */
+
+		p {margin:1em 0;}
+		input + p {font-size:80%; font-style:italic; color:#aaa;}
+
+		#thelist {margin:1em 0;}
+		#thelist input {border-bottom:1px solid #ccc;}
+
+		#contentwithlife {margin:2em auto 1em auto; padding:1em; border:1px dashed #ccc; background-color:#eee;}
+		#contentwithlife input {display:inline; text-align:center; background-color:#eee; border-bottom:1px solid #ccc;}
+		/* #sharethis {display:block; margin:0.2em auto 0 auto; width:auto; font-size:80%;} */
+
+		#sosumi {margin:1em 0; font-size:10pt;}
+		#sosumi a {font-size:10pt;}
+	</style>
+
+	<link rel="shortcut icon" href="../../favico.png" type="image/png" />
+</head>
+<body>
+	<ol id="thelist">
+		<li><label for="entryone">noun</label><input type="text" placeholder="noun" id="entryone" /></li>
+		<li><label for="entrytwo">type of person</label><input type="text" placeholder="type of person" id="entrytwo" /></li>
+		<li><label for="entrythree">body part</label><input type="text" placeholder="body part" id="entrythree" /></li>
+	</ol>
+
+	<input type="button" value="Reveal/hide results" id="revealing" />
+	<p>This is unhidden by default to demonstrate what's happening behind the scenes.</p>
+
+	<div id="content" style="display:block;">
+		<div id="contentwithlife">
+			Mamma always told me that <label for="entryone">(noun)</label><input type="text" placeholder="noun" id="entryonefill" /> is the quickest way to a <label for="entrytwo">(type of person)</label><input type="text" placeholder="type of person" id="entrytwofill" />'s tiny, little <label for="entrythree">(body part)</label><input type="text" placeholder="body part" id="entrythreefill" />.
+		</div>
+		<!--<input type="button" value="Share this" id="sharethis" />-->
+	</div>
+
+	<div id="sosumi">2010. <a href="http://www.monstercyb.org/gordon/lab">Monstercyb.org</a>. A part of the <a href="http://www.ocf.berkeley.edu/~gordeon">GordeonBleu</a> network.</div>
+
+	<script type="text/javascript">
+		(function() {
+			var revealing = document.getElementById("revealing");
+			var content = document.getElementById("content");
+			var thelist = document.getElementById("thelist");
+			var entryone = document.getElementById("entryone");
+			var entrytwo = document.getElementById("entrytwo");
+			var entrythree = document.getElementById("entrythree");
+
+			// update story entries as user types
+			function filler(eventful, targetEl) {
+					var targetElId = targetEl.id;
+					document.getElementById(targetElId + "fill").value = document.getElementById(targetElId).value;
+			}
+
+			// onfocus/onblur-style equivalents in absence of input placeholder attribute support
+			function fauxPlaceholder(eventful, targetEl) {
+					// only add event listener if it has placeholder attribute, which means just inputs
+					// also, blur events do not bubble up
+					if (targetEl.getAttribute("placeholder")) {
+						crossBrowserEventListen("blur",targetEl.id,function(){
+							if (targetEl.value == "") {targetEl.value = targetEl.getAttribute("placeholder");}
+						});
+					}
+
+					if (targetEl.value == targetEl.getAttribute("placeholder")) {
+						targetEl.value = "";
+					}
+			}
+
+			// toggle hide story section
+			function toggleCowHide() {
+				if (content.style.display == "block") {
+					content.style.display = "none";
+				}
+				else if (content.style.display == "none") {
+					content.style.display = "block";
+				}
+			}
+
+			/*
+			// because i felt like reinventing the wheel
+			function crossBrowserEventListen(whichEvent, elementId, fnToRunOnEvent) {
+				var el = document.getElementById(elementId);
+				if (el.addEventListener) {
+					el.addEventListener(whichEvent,fnToRunOnEvent,false);
+				}
+				else if (el.attachEvent) {
+					el.attachEvent("on"+whichEvent,fnToRunOnEvent);
+				}
+			}
+			*/
+
+			// an improved cross-browser general event listener function by potch
+			// allowing me to move out the object detection to serve IE window.event and srcElement from other methods
+			function crossBrowserEventListen(event, el, fn) {
+				el = document.getElementById(el);
+					if (typeof event != 'string') return;
+					if (typeof fn != 'function') return;
+
+				if (el.attachEvent) {
+					el.attachEvent('on'+event.toLowerCase(), function() {
+						var e = window.event
+						fn.call(this,e,e.srcElement);
+					});
+				}
+				else if (el.addEventListener) {
+					el.addEventListener(event, function(e) {
+						fn.call(this,e,e.target)
+					}, false);
+				}
+				else {
+					el["on" + event.toLowerCase()] = fn;
+				}
+			}
+
+			crossBrowserEventListen("keyup","thelist",filler);
+
+			crossBrowserEventListen("click","revealing",toggleCowHide);
+
+			// detect for support of input placeholder attribute, and work if alternative if not
+			function compatibleInputPlaceholder() {
+				var inputEl = document.createElement("input");
+				return "placeholder" in inputEl;
+			};
+
+			if(!compatibleInputPlaceholder()) {
+				var thelistlength = thelist.children.length;
+				var currententry;
+				for(var j=0; j<thelistlength; j++) {
+					currententry = thelist.children[j].children[1];
+					currententry.value = currententry.getAttribute("placeholder");
+					// decided against adding blur event listeners for each entry here
+				}
+				crossBrowserEventListen("click","thelist",fauxPlaceholder);
+			}
+			
+		})();
+	</script>
+
+	<!--Created: 2010 April 9-->
+	<!--Revised: 2010 April 10 and 11-->
+
+	<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+	try {
+	var pageTracker = _gat._getTracker("UA-299058-9");
+	pageTracker._trackPageview();
+	} catch(err) {}</script>
+</body>
+</html>
